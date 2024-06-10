@@ -13,17 +13,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     ColorScheme appTheme = ColorScheme.fromSeed(
       brightness: Brightness.dark,
-      seedColor: Colors.green,
-      surface: Colors.green,
+      seedColor: const Color.fromARGB(255, 146, 230, 249),
+      surface: const Color.fromARGB(255, 44, 50, 60),
     );
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         colorScheme: appTheme,
-        scaffoldBackgroundColor: ColorScheme.fromSeed(
-          brightness: Brightness.dark,
-          seedColor: Colors.green,
-        ).surface, // Uses the background color from the generated ColorScheme
+      scaffoldBackgroundColor: const Color.fromARGB(255, 49, 47, 59),
       ),
       home: const GroceryList(),
     );
