@@ -16,37 +16,71 @@ class GroceryList extends StatefulWidget {
 
 class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> groceryItems = [];
+  bool isLoading = true;
+  String? _error;
+
 
   /// same as post but here we just get the data from firebase
   void _loadDate() async {
-    final url = Uri.https(
-        "flutter-test-ef152-default-rtdb.firebaseio.com", "shopping-list.json");
-    final http.Response res = await http.get(url);
-    final Map<String, dynamic> loadedData = json.decode(res.body);
+    try {
+      final url = Uri.https(
+          "flutter-test-ef152-default-rtdb.firebaseio.com",
+          "shopping-list.json");
+      final http.Response res = await http.get(url);
+      if (res.statusCode >= 400) {
+        /// in general status code 400 and more mean you have an error
+        setState(() {
+          _error = "Failed to get the data. Please try again later";
+        });
+        return;
+      }
 
-    /// [json.decode] convert string to map
-    /// for dart it's hard to give this [loadedData] type so we give it manually to understand more what is this type just use log(res.body.toString());
-    /// but dart will not accept that type so we have to just write dynamic
+      /// very Important note if you delete all the data you will get isLoading true always
+      /// because the data it null so we are trying to decode null and say it's Map<String, dynamic>
+      /// to solve this we write the following code.
+      /// Also note that the data from the firebase is string so we have to write null in string,
+      /// or decode res.body so we can write null normally
+      if (res.body == "null") {
+        setState(() {
+          isLoading = false;
+        });
 
-    List<GroceryItem> loadedItems = [];
-    for (var item in loadedData.entries) {
-      final Category category = categories.entries.firstWhere(
-        (element) {
-          return element.value.title == item.value["category"];
-        },
-      ).value;
-      loadedItems.add(
-        GroceryItem(
-          id: item.key,
-          name: item.value["name"],
-          quantity: item.value["quantity"],
-          category: category,
-        ),
-      );
+        /// here we told flutter to go back this is the end of the function
+        return;
+      }
+      final Map<String, dynamic> loadedData = json.decode(res.body);
+
+      /// [json.decode] convert string to map
+      /// for dart it's hard to give this [loadedData] type so we give it manually to understand more what is this type just use log(res.body.toString());
+      /// but dart will not accept that type so we have to just write dynamic
+
+      List<GroceryItem> loadedItems = [];
+      for (var item in loadedData.entries) {
+        final Category category = categories.entries
+            .firstWhere(
+              (element) {
+            return element.value.title == item.value["category"];
+          },
+        )
+            .value;
+        loadedItems.add(
+          GroceryItem(
+            id: item.key,
+            name: item.value["name"],
+            quantity: item.value["quantity"],
+            category: category,
+          ),
+        );
+      }
+      setState(() {
+        groceryItems = loadedItems;
+        isLoading = false;
+      });
+    }catch(_){
+      setState(() {
+        _error = "Something went wrong. Please try again later";
+      });
     }
-    setState(() {
-      groceryItems = loadedItems;
-    });
   }
 
   @override
@@ -57,8 +91,10 @@ class _GroceryListState extends State<GroceryList> {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = const Center(
-      child: Text("No item added yet."),
+    Widget content = Center(
+      child: isLoading
+          ? const CircularProgressIndicator()
+          : const Text("No item added yet."),
     );
     if (groceryItems.isNotEmpty) {
       content = ListView.builder(
@@ -66,9 +102,7 @@ class _GroceryListState extends State<GroceryList> {
         itemBuilder: (ctx, int index) => Dismissible(
           key: ValueKey(groceryItems[index].id),
           onDismissed: (_) {
-            setState(() {
-              groceryItems.remove(groceryItems[index]);
-            });
+            _removeItem(groceryItems[index]);
           },
           child: ListTile(
             ///you can't just writ [GroceryItem.name] no [GroceryItem] is an index in the [_groceryItems] and it's List,
@@ -91,6 +125,11 @@ class _GroceryListState extends State<GroceryList> {
         ),
       );
     }
+    if (_error != null) {
+      content = Center(
+        child: Text(_error!),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text("Grocery List"),
@@ -103,6 +142,26 @@ class _GroceryListState extends State<GroceryList> {
       ),
       body: content,
     );
+  }
+
+  void _removeItem(GroceryItem item) async {
+    final index = groceryItems.indexOf(item);
+    setState(() {
+      groceryItems.remove(item);
+    });
+    final url = Uri.https("flutter-test-ef152-default-rtdb.firebaseio.com",
+        "shopping-list/${item.id}.json");
+    final http.Response res = await http.delete(url);
+
+    /// we are using http when we want to send ANY request to the firebase
+    /// not that ANY DATA from http will be named RESPONSE
+    if (res.statusCode >= 400) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("We couldn't delete the item.")));
+      setState(() {
+        groceryItems.insert(index, item);
+      });
+    }
   }
 
   _addItem() async {

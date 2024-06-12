@@ -18,6 +18,43 @@ class _NewItemState extends State<NewItem> {
   String _enteredName = "";
   int _enteredQuantity = 0;
   Category _selectedCategory = categories[Categories.dairy]!;
+  bool _isLoading = false;
+
+  _saveItem() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    /// instead of using parse you can use https as follow in this case you don't have to write [https://]
+    final url = Uri.https(
+        "flutter-test-ef152-default-rtdb.firebaseio.com", "shopping-list.json");
+    final http.Response res = await http.post(
+      /// we wanted to post our data on firebase so we used http then [post] but the url want it to be type of uri,
+      /// so we create the [url] var to do this then give it other information he need to post our data
+      url,
+      headers: {"Conten-Type": "application/json"},
+      body: json.encode(
+        /// [json.encode] convert object(map) to string
+        {
+          "name": _enteredName,
+          "quantity": _enteredQuantity,
+          "category": _selectedCategory.title,
+        },
+      ),
+    );
+    if (res.statusCode == 200) {
+      final Map<String, dynamic> id = json.decode(res.body);
+      Navigator.of(context).pop(GroceryItem(
+        id: id["name"],
+        name: _enteredName,
+        quantity: _enteredQuantity,
+        category: _selectedCategory,
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +65,6 @@ class _NewItemState extends State<NewItem> {
       body: Padding(
         padding: const EdgeInsets.all(12),
         child: Form(
-
           /// [Form] is very useful when you are dealing with forms or many input, it's have a [key]
           /// this can make you life easier
           key: _formKey,
@@ -44,12 +80,8 @@ class _NewItemState extends State<NewItem> {
                 validator: (value) {
                   /// [value] what the user will enter
                   if (value == null ||
-                      value
-                          .trim()
-                          .length <= 1 ||
-                      value
-                          .trim()
-                          .length > 51) {
+                      value.trim().length <= 1 ||
+                      value.trim().length > 51) {
                     return "Must be between 1 and 50 characters. ";
                   }
                   return null;
@@ -86,7 +118,7 @@ class _NewItemState extends State<NewItem> {
                       items: [
                         for (final category in categories.entries)
 
-                        /// [entries] allow us to take the values inside the map
+                          /// [entries] allow us to take the values inside the map
                           DropdownMenuItem(
                             value: category.value,
                             child: Row(
@@ -119,48 +151,21 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
-                      _formKey.currentState!.reset();
-                    },
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            _formKey.currentState!.reset();
+                          },
                     child: const Text("Reset"),
                   ),
                   ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        _formKey.currentState!.save();
-
-                        /// instead of using parse you can use https as follow in this case you don't have to write [https://]
-                        final url = Uri.https(
-                            "flutter-test-ef152-default-rtdb.firebaseio.com",
-                            "shopping-list.json");
-                        final http.Response res = await http.post(
-
-                          /// we wanted to post our data on firebase so we used http then [post] but the url want it to be type of uri,
-                          /// so we create the [url] var to do this then give it other information he need to post our data
-                          url,
-                          headers: {"Conten-Type": "application/json"},
-                          body: json.encode(
-
-                            /// [json.encode] convert object(map) to string
-                            {
-                              "name": _enteredName,
-                              "quantity": _enteredQuantity,
-                              "category": _selectedCategory.title,
-                            },
-                          ),
-                        );
-                        if (res.statusCode == 200) {
-                          final Map<String, dynamic> id = json.decode(res.body);
-                          Navigator.of(context).pop(
-                              GroceryItem(id: id["name"],
-                                  name: _enteredName,
-                                  quantity: _enteredQuantity,
-                                  category: _selectedCategory,)
-                          );
-                        }
-                      }
-                    },
-                    child: const Text("Add item"),
+                    onPressed: _isLoading ? null : _saveItem,
+                    child: _isLoading
+                        ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator())
+                        : const Text("Add item"),
                   )
                 ],
               ),
