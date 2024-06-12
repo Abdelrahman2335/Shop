@@ -3,6 +3,13 @@ import 'package:flutter/material.dart';
 import '../models/category.dart';
 
 const Map<Categories, Category> categories = {
+  ///this is the element [Categories.vegetables] and the title is the
+  ///very important to note that entries is a map
+  ///key is: Categories.vegetables
+  ///value is : Category(
+  ///     'Vegetables',
+  ///     Color.fromARGB(255, 0, 255, 128),
+  ///   ),
   Categories.vegetables: Category(
     'Vegetables',
     Color.fromARGB(255, 0, 255, 128),
