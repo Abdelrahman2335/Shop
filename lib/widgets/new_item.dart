@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shop/models/grocery_item.dart';
@@ -66,7 +65,7 @@ class _NewItemState extends State<NewItem> {
         padding: const EdgeInsets.all(12),
         child: Form(
           /// [Form] is very useful when you are dealing with forms or many input, it's have a [key]
-          /// this can make you life easier
+          /// this can make your life easier
           key: _formKey,
           child: Column(
             children: [
