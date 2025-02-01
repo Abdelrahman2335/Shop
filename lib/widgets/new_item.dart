@@ -32,7 +32,7 @@ class _NewItemState extends State<NewItem> {
         "flutter-test-ef152-default-rtdb.firebaseio.com", "shopping-list.json");
     final http.Response res = await http.post(
       /// we wanted to post our data on firebase so we used http then [post] but the url want it to be type of uri,
-      /// so we create the [url] var to do this then give it other information he need to post our data
+      /// so we create the [url] var to do this then give it other information he needs to post our data
       url,
       headers: {"Conten-Type": "application/json"},
       body: json.encode(
@@ -65,7 +65,7 @@ class _NewItemState extends State<NewItem> {
         padding: const EdgeInsets.all(12),
         child: Form(
           /// [Form] is very useful when you are dealing with forms or many input, it's have a [key]
-          /// this can make your life easier
+          /// this will can make your life easier
           key: _formKey,
           child: Column(
             children: [

@@ -19,12 +19,10 @@ class _GroceryListState extends State<GroceryList> {
   bool isLoading = true;
   String? _error;
 
-
   /// same as post but here we just get the data from firebase
   void _loadDate() async {
     try {
-      final url = Uri.https(
-          "flutter-test-ef152-default-rtdb.firebaseio.com",
+      final url = Uri.https("flutter-test-ef152-default-rtdb.firebaseio.com",
           "shopping-list.json");
       final http.Response res = await http.get(url);
       if (res.statusCode >= 400) {
@@ -36,7 +34,7 @@ class _GroceryListState extends State<GroceryList> {
       }
 
       /// very Important note if you delete all the data you will get isLoading true always
-      /// because the data it null so we are trying to decode null and say it's Map<String, dynamic>
+      /// because the data is null so we are trying to decode null and say it's Map<String, dynamic>
       /// to solve this we write the following code.
       /// Also note that the data from the firebase is string so we have to write null in string,
       /// or decode res.body so we can write null normally
@@ -56,13 +54,11 @@ class _GroceryListState extends State<GroceryList> {
 
       List<GroceryItem> loadedItems = [];
       for (var item in loadedData.entries) {
-        final Category category = categories.entries
-            .firstWhere(
-              (element) {
+        final Category category = categories.entries.firstWhere(
+          (element) {
             return element.value.title == item.value["category"];
           },
-        )
-            .value;
+        ).value;
         loadedItems.add(
           GroceryItem(
             id: item.key,
@@ -76,7 +72,7 @@ class _GroceryListState extends State<GroceryList> {
         groceryItems = loadedItems;
         isLoading = false;
       });
-    }catch(_){
+    } catch (_) {
       setState(() {
         _error = "Something went wrong. Please try again later";
       });
@@ -135,7 +131,13 @@ class _GroceryListState extends State<GroceryList> {
         title: const Text("Grocery List"),
         actions: [
           IconButton(
-            onPressed: _addItem,
+            onPressed: () {
+              Navigator.of(context).push<GroceryItem>(
+                MaterialPageRoute(
+                  builder: (ctx) => const NewItem(),
+                ),
+              );
+            },
             icon: const Icon(Icons.add),
           )
         ],
@@ -161,21 +163,6 @@ class _GroceryListState extends State<GroceryList> {
       setState(() {
         groceryItems.insert(index, item);
       });
-    }
-  }
-
-  _addItem() async {
-    final newValue = await Navigator.of(context).push<GroceryItem>(
-      MaterialPageRoute(
-        builder: (ctx) => const NewItem(),
-      ),
-    );
-    if (newValue != null) {
-      setState(() {
-        groceryItems.add(newValue);
-      });
-    } else {
-      return;
     }
   }
 }
